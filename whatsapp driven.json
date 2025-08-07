@@ -1,0 +1,258 @@
+{
+  "name": "whatsapp driven",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-gdrive",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "579609db-160a-4487-9066-69eae1bdd354",
+      "name": "Webhook",
+      "webhookId": "f737d390-ca57-4378-98e3-e695c947a491"
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = $json[\"Body\"] || $json[\"message\"] || \"\";\nconst parts = message.trim().split(\" \");\nconst action = parts[0].toLowerCase();\n\nreturn [{\n  json: {\n    action,\n    argument: parts.slice(1).join(\" \"),\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0143fc78-3db0-4775-81cc-9ad71595f5cb",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "action",
+                    "rightValue": "list",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "32ca2749-8a53-4584-9bed-a94ba23174b1"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "be9de302-de1b-4641-b5a2-bbca9b8ce2d1",
+                    "leftValue": "action",
+                    "rightValue": "search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f361b163-ae92-4a3b-8563-dde5973786f1",
+                    "leftValue": "action",
+                    "rightValue": "upload",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "9c564fbf-bc67-4394-bb68-48f83482e6bc",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "filter": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        624,
+        -112
+      ],
+      "id": "48d9c01c-9579-4caa-b957-ca281559b15a",
+      "name": "Search files and folders",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ZRTPXd0f5e4MTPKQ",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const files = items.map(item => item.json.name).join(\"\\n\");\n\nreturn [{\n  json: {\n    reply: `Here are your files:\\n\\n${files}`,\n    to: $node[\"Parse Command\"].json[\"from\"]\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        -112
+      ],
+      "id": "c0e3034e-e7f7-4071-82c9-47427ff63a55",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{$json[\"to\"]}}",
+        "message": "={{$json[\"reply\"]}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        -112
+      ],
+      "id": "2a60b457-9873-4b9a-a896-9b1e70401e2c",
+      "name": "Send an SMS/MMS/WhatsApp message",
+      "credentials": {
+        "twilioApi": {
+          "id": "ZGnThag3vY6fgOPD",
+          "name": "Twilio account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f2db4035-44be-4f69-ab81-429496e0bf9a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c1b40d4bda429db77315ec1295f31a96b723ecc487e8b8896ae1684f2dc701e8"
+  },
+  "id": "WaSexxeZHLLh0aJC",
+  "tags": []
+}
